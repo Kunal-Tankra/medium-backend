@@ -15,6 +15,10 @@ const schema = new mongoose.Schema({
     description_image: {
         type: String
     },
+    category_id: {
+        type: mongoose.SchemaTypes.ObjectId,
+        ref: 'Categories'
+    },
     createdAt: {
         type: Date,
         default: Date.now

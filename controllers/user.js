@@ -1,4 +1,5 @@
 import Users from "../models/user.js"
+import { generateAuthTokens } from "../utils/authToken.js"
 import { sendError, sendInternalServerError } from "../utils/error.js"
 import bcrypt from 'bcrypt'
 
@@ -46,8 +47,43 @@ export const register = async (req, res) => {
 
 export const login = async (req, res) => {
     try {
+        const { email, password } = req.body
+
+        if (!(email && password)) {
+            return sendError(res, 'Incomplete data provided', 400)
+        }
+
+        let user = await Users.findOne({ email }).select('+password').lean()
+
+        if (!user) {
+            return sendError(res, 'User not found', 404)
+        }
+
+        console.log(user)
+        const isMatched = await bcrypt.compare(password, user.password)
+
+        if (!isMatched) {
+            return sendError(res, 'Invalid credentials', 401)
+        }
+
+
+        const { access, refresh } = generateAuthTokens(user._id)
+        user = {
+            username: `${user.first_name} ${user.last_name}`,
+            email: user.email,
+            profile_pic: '',
+            id: user._id
+        }
+
+        res.send({
+            success: true,
+            message: 'Logged in successfully',
+            user,
+            access,
+            refresh
+        })
 
     } catch (error) {
-        sendInternalServerError(red, error)
+        sendInternalServerError(res, error)
     }
 }
