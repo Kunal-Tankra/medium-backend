@@ -11,7 +11,7 @@ env.config({ path: "./config.env" })
 app.use(express.json())
 
 // routers
-app.use("/user/api/v1", userRouter)
+app.use(userRouter)
 
 
 

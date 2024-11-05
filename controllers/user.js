@@ -41,7 +41,7 @@ export const register = async (req, res) => {
             message: 'Registered successfully'
         })
     } catch (error) {
-        sendInternalServerError(res, error)
+        sendInternalServerError(res, error.message)
     }
 }
 
@@ -59,7 +59,6 @@ export const login = async (req, res) => {
             return sendError(res, 'User not found', 404)
         }
 
-        console.log(user)
         const isMatched = await bcrypt.compare(password, user.password)
 
         if (!isMatched) {
@@ -84,6 +83,35 @@ export const login = async (req, res) => {
         })
 
     } catch (error) {
-        sendInternalServerError(res, error)
+        sendInternalServerError(res, error.message)
+    }
+}
+
+export const googleAuth = async (req, res) => {
+    try {
+        const { email } = req.body
+
+        if (!email) {
+            return sendError(res, 'Incomplete data provided', 400)
+        }
+
+        let user = await Users.findOne({ email })
+
+        if (!user) {
+            // if user doesn't exists then save the data
+            user = await Users.create({ email })
+        }
+
+        const { access, refresh } = generateAuthTokens(user._id)
+
+        res.send({
+            success: true,
+            id: user._id,
+            access,
+            refresh
+        })
+
+    } catch (error) {
+        sendInternalServerError(res, error.message)
     }
 }
