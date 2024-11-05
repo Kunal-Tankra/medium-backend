@@ -15,15 +15,21 @@ const schema = new mongoose.Schema({
     description_image: {
         type: String
     },
-    category_id: {
+    user_id: {
         type: mongoose.SchemaTypes.ObjectId,
-        ref: 'Categories'
+        ref: 'Users',
+        required: true
+    },
+    category: {
+        type: mongoose.SchemaTypes.ObjectId,
+        ref: 'Categories',
+        required: true
     },
     createdAt: {
         type: Date,
         default: Date.now
     }
-})
+}, { versionKey: false })
 
 const Posts = mongoose.model('Posts', schema)
 export default Posts
