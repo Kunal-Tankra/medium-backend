@@ -8,8 +8,12 @@ const schema = new mongoose.Schema({
     post_id: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Posts'
+    },
+    bookmarkedAt: {
+        type: Date,
+        default: Date.now
     }
-})
+}, { versionKey: false })
 
 const Bookmarks = mongoose.model('Bookmarks', schema)
 export default Bookmarks

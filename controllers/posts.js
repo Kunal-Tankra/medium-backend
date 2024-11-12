@@ -1,3 +1,4 @@
+import Bookmarks from "../models/bookmarks.js"
 import Posts from "../models/posts.js"
 import { sendInternalServerError } from "../utils/error.js"
 
@@ -41,6 +42,26 @@ export const getAllPosts = async (req, res) => {
             results: posts,
             next: next ? true : false
         })
+    } catch (error) {
+        sendInternalServerError(res, error.message)
+    }
+}
+
+export const getPostDetails = async (req, res) => {
+    try {
+        const { post_id } = req.params
+
+        // check if this post has been bookmarked by this user or not
+        const r1 = Bookmarks.findOne({ post_id, user_id: req.user_id })
+
+        // get post details
+        const r2 = Posts.findById(post_id).lean()
+
+        const [isBookmarked, post] = await Promise.all([r1, r2])
+        post.user_bookmark = isBookmarked ? true : false
+        delete (post.user_id)
+
+        res.send({ success: true, data: post })
     } catch (error) {
         sendInternalServerError(res, error.message)
     }
