@@ -1,6 +1,6 @@
 import Bookmarks from "../models/bookmarks.js"
 import Posts from "../models/posts.js"
-import { sendInternalServerError } from "../utils/error.js"
+import { sendError, sendInternalServerError } from "../utils/error.js"
 
 export const createPost = async (req, res) => {
     try {
@@ -29,7 +29,7 @@ export const createPost = async (req, res) => {
 export const getAllPosts = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1
-        const limit = 2
+        const limit = 10
         const skip = (page - 1) * limit;
 
         const r1 = Posts.countDocuments().skip(page * limit)
@@ -62,6 +62,21 @@ export const getPostDetails = async (req, res) => {
         delete (post.user_id)
 
         res.send({ success: true, data: post })
+    } catch (error) {
+        sendInternalServerError(res, error.message)
+    }
+}
+
+export const getCategoryPosts = async (req, res) => {
+    try {
+        const { category_id } = req.params
+
+        const posts = await Posts.find({ category: category_id }).sort({ createdAt: -1 })
+
+        res.send({
+            success: true,
+            data: posts
+        })
     } catch (error) {
         sendInternalServerError(res, error.message)
     }
