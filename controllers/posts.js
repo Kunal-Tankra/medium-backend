@@ -72,10 +72,15 @@ export const getPostDetails = async (req, res) => {
         const r1 = Bookmarks.findOne({ post_id, user_id: req.user_id })
 
         // get post details
-        const r2 = Posts.findById(post_id).lean()
+        const r2 = Posts.findById(post_id).populate('user_id', 'first_name last_name email').populate('category').lean()
 
         const [isBookmarked, post] = await Promise.all([r1, r2])
         post.user_bookmark = isBookmarked ? true : false
+        post.user = {
+            _id: post.user_id._id,
+            name: (post.user_id.first_name && post.user_id.last_name) ? `${post.user_id.first_name} ${post.user_id.last_name}` : post.user_id.email.split('@')[0]
+        }
+
         delete (post.user_id)
 
         res.send({ success: true, data: post })
