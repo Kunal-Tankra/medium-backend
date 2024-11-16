@@ -4,6 +4,7 @@ import userRouter from './routes/user.js'
 import postRouter from './routes/post.js'
 import bookmarkRouter from './routes/bookmark.js'
 import categoryRouter from './routes/category.js'
+import cors from 'cors'
 
 export const app = express()
 
@@ -12,6 +13,7 @@ env.config({ path: "./config.env" })
 
 // middlewares
 app.use(express.json())
+app.use(cors())
 
 
 // routers
