@@ -93,11 +93,27 @@ export const getCategoryPosts = async (req, res) => {
     try {
         const { category_id } = req.params
 
-        const posts = await Posts.find({ category: category_id }).sort({ createdAt: -1 })
+        const posts = await Posts.find({ category: category_id }).sort({ createdAt: -1 }).populate('user_id', 'first_name last_name email').populate('category').lean()
+
+        const data = posts.map(({ user_id, ...post }) => ({ ...post, user: { _id: user_id._id, name: (user_id.first_name && user_id.last_name) ? `${user_id.first_name} ${user_id.last_name}` : user_id.email.split('@')[0] }, isBookmarked: false }))
+
+        // set bookmark status by user
+        const { user_id } = req.body
+        if (user_id) {
+            // get all bookmarks of user
+            const bookmarkedPosts = (await Bookmarks.find({ user_id })).map(item => item.post_id)
+
+            // check and set bookmark status in data 
+            for (const post of data) {
+                if (bookmarkedPosts.toString().includes(post._id.toString())) {
+                    post.isBookmarked = true
+                }
+            }
+        }
 
         res.send({
             success: true,
-            data: posts
+            data
         })
     } catch (error) {
         sendInternalServerError(res, error.message)
