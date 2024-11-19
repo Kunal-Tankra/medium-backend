@@ -1,5 +1,6 @@
 import { isAuthenticated } from "../middlewares/authToken.js"
 import Bookmarks from "../models/bookmarks.js"
+import Categories from "../models/categories.js"
 import Posts from "../models/posts.js"
 import { sendError, sendInternalServerError } from "../utils/error.js"
 
@@ -93,7 +94,11 @@ export const getCategoryPosts = async (req, res) => {
     try {
         const { category_id } = req.params
 
-        const posts = await Posts.find({ category: category_id }).sort({ createdAt: -1 }).populate('user_id', 'first_name last_name email').populate('category').lean()
+        const p1 = Categories.findById(category_id)
+
+        const p2 = Posts.find({ category: category_id }).sort({ createdAt: -1 }).populate('user_id', 'first_name last_name email').populate('category').lean()
+
+        const [category, posts] = await Promise.all([p1, p2])
 
         const data = posts.map(({ user_id, ...post }) => ({ ...post, user: { _id: user_id._id, name: (user_id.first_name && user_id.last_name) ? `${user_id.first_name} ${user_id.last_name}` : user_id.email.split('@')[0] }, isBookmarked: false }))
 
@@ -113,7 +118,9 @@ export const getCategoryPosts = async (req, res) => {
 
         res.send({
             success: true,
-            data
+            data,
+            category
+
         })
     } catch (error) {
         sendInternalServerError(res, error.message)
