@@ -67,10 +67,10 @@ export const getAllPosts = async (req, res) => {
 
 export const getPostDetails = async (req, res) => {
     try {
-        const { post_id } = req.params
+        const { post_id, user_id } = req.params
 
         // check if this post has been bookmarked by this user or not
-        const r1 = Bookmarks.findOne({ post_id, user_id: req.user_id })
+        const r1 = user_id ? Bookmarks.findOne({ post_id, user_id }) : false
 
         // get post details
         const r2 = Posts.findById(post_id).populate('user_id', 'first_name last_name email').populate('category').lean()
