@@ -42,7 +42,7 @@ export const getAllPosts = async (req, res) => {
         const data = posts.map(({ user_id, ...post }) => ({ ...post, user: { _id: user_id._id, name: (user_id.first_name && user_id.last_name) ? `${user_id.first_name} ${user_id.last_name}` : user_id.email.split('@')[0] }, isBookmarked: false }))
 
         // set bookmark status by user
-        const { user_id } = req.body
+        const { user_id } = req.params
         if (user_id) {
             // get all bookmarks of user
             const bookmarkedPosts = (await Bookmarks.find({ user_id })).map(item => item.post_id)
