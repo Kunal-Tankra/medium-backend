@@ -65,6 +65,35 @@ export const getAllPosts = async (req, res) => {
     }
 }
 
+export const getPostsByUserId = async (req, res) => {
+    try {
+        const { user } = req.params  //user id to get posts of this user
+        const loggedInUser = req.user_id
+
+        if (!user || !loggedInUser) {
+            return sendError(res, 'Invalid request', 400)
+        }
+
+        const p1 = Posts.find({ user_id: user }).sort({ createdAt: -1 }).select('-title_image -description_image').populate('category').populate('user_id', 'first_name last_name email').lean()
+
+        const p2 = Bookmarks.find({ user_id: loggedInUser }).select('post_id').lean()
+
+        let [posts, bookmarkedPosts] = await Promise.all([p1, p2])
+
+        bookmarkedPosts = bookmarkedPosts.map(item => item.post_id)
+
+        const data = posts.map(({ user_id, ...post }) => ({ ...post, user: { _id: user_id._id, name: (user_id.first_name && user_id.last_name) ? `${user_id.first_name} ${user_id.last_name}` : user_id.email.split('@')[0] }, isBookmarked: bookmarkedPosts.toString().includes(post._id.toString()) }))
+
+        res.send({
+            success: true,
+            data
+        })
+
+    } catch (error) {
+        sendInternalServerError(res, error.message)
+    }
+}
+
 export const getPostDetails = async (req, res) => {
     try {
         const { post_id, user_id } = req.params
