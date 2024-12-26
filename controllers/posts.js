@@ -2,6 +2,7 @@ import { isAuthenticated } from "../middlewares/authToken.js"
 import Bookmarks from "../models/bookmarks.js"
 import Categories from "../models/categories.js"
 import Posts from "../models/posts.js"
+import Users from "../models/user.js"
 import { sendError, sendInternalServerError } from "../utils/error.js"
 
 export const createPost = async (req, res) => {
@@ -74,11 +75,13 @@ export const getPostsByUserId = async (req, res) => {
             return sendError(res, 'Invalid request', 400)
         }
 
-        const p1 = Posts.find({ user_id: user }).sort({ createdAt: -1 }).select('-title_image -description_image').populate('category').populate('user_id', 'first_name last_name email').lean()
+        const p1 = Posts.find({ user_id: user }).sort({ createdAt: -1 }).populate('category').populate('user_id', 'first_name last_name email').lean()
 
         const p2 = Bookmarks.find({ user_id: loggedInUser }).select('post_id').lean()
 
-        let [posts, bookmarkedPosts] = await Promise.all([p1, p2])
+        const p3 = Users.findById(user).select('first_name last_name email').lean() || {}
+
+        let [posts, bookmarkedPosts, postsUser] = await Promise.all([p1, p2, p3])
 
         bookmarkedPosts = bookmarkedPosts.map(item => item.post_id)
 
@@ -86,7 +89,10 @@ export const getPostsByUserId = async (req, res) => {
 
         res.send({
             success: true,
-            data
+            data: {
+                posts: data,
+                author: (postsUser?.first_name && postsUser?.last_name) ? `${postsUser?.first_name} ${postsUser?.last_name}` : postsUser?.email.split('@')[0]
+            }
         })
 
     } catch (error) {
